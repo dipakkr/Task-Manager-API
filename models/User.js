@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import validator from 'validator';
+import jwt from 'jsonwebtoken';
 
 const UserSchema = new mongoose.Schema({
     name: {
@@ -39,8 +40,22 @@ const UserSchema = new mongoose.Schema({
                 throw new Error('Age must be a postive number')
             }
         }
-    }
+    },
+    tokens : [{
+        token : {
+            type : String,
+            required : true
+        }
+    }]
 });
+
+UserSchema.methods.generateAuthToken = async function() {
+    const user = this;
+    const token = jwt.sign({_id : user._id.toString()}, 'hellogithub');
+    user.tokens = user.tokens.concat({token});
+    await user.save();
+    return token;
+};
 
 UserSchema.statics.findByCredentials = async (email, password) => {
     
@@ -65,7 +80,6 @@ UserSchema.pre('save', async function(next){
         user.password = await bcrypt.hash(user.password, 8);
     }
     next();
-    console.log(this);
 });
 
 const User = mongoose.model('User', UserSchema); 

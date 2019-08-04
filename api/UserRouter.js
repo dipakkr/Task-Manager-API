@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 import '../db/mongoose';
+import auth from '../middleware/auth';
 
 
 const UserRouter = express.Router();
@@ -11,7 +12,9 @@ const UserRouter = express.Router();
 UserRouter.post('/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password);
-        res.send(user);
+        const token = await user.generateAuthToken();
+        console.log(token);
+        res.send({user, token}); 
     } catch (e) {
         res.status(400).send();
     }
@@ -22,9 +25,12 @@ UserRouter.post('/login', async (req, res) => {
 UserRouter.post('/', async (req, res)=>{
 
     const user = new User(req.body);
+
     try {
         await user.save();
-        res.status(201).send(user);
+        const token = await user.generateAuthToken();
+        console.log(token);
+        res.status(201).send({user, token});
     } catch (e) {
         res.status(400).send(e);
     }
@@ -32,19 +38,21 @@ UserRouter.post('/', async (req, res)=>{
 
 // @GET - ALL USERS
 
-UserRouter.get('/', async (req, res)=>{
+UserRouter.get('/me', auth, async (req, res)=>{
+   
+    res.send(req.user);
     
-    try {
-        const users = await User.find({});
-        res.send(users);
-    } catch (e) {
-        res.status(500).send();
-    }
+    // try {
+    //     const users = await User.find({});
+    //     res.send(users);
+    // } catch (e) {
+    //     res.status(500).send();
+    // }
 });
 
 // @GET - Unique User By ID
 
-UserRouter.get('/:id', async (req, res) => {
+UserRouter.get('/:id', auth, async (req, res) => {
     
     const _id = req.params.id
     try {

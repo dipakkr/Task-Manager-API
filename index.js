@@ -9,21 +9,15 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+// app.use((req, res, next)=>{
+//     res.status(503).send({response : "Website is getting Updated !"});
+//     next();
+// });
+
+  
 // End Points
 app.use('/user', UserRouter);
 app.use('/task', TaskRouter);
-
-const generateToken = async () =>{
-    const token = jwt.sign({_id : 'hello123'}, 'thisisnewcourse', {expiresIn : "5 seconds"});
-    console.log(token);
-
-    setTimeout(()=>{
-        const data = jwt.verify(token, 'thisisnewcourse');
-        console.log(data);
-    }, 3000);
-}
-
-generateToken();
 
 //Server
 app.listen(3000, (req, res)=>{
